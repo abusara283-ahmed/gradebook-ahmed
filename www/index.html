@@ -1994,7 +1994,7 @@ function cycle(n){
         Sy.dirty=false;saveSy();
       });
     }
-    if(Sy.dirty||(r.empty&&!S.sample)){var d=toDoc();if(d.classes&&(Object.keys(d.classes).length||Object.keys(d.nt).length))return pushDoc(d,n)}
+    if(Sy.dirty||(r.empty&&!S.sample)){var d=toDoc();if(d.classes)return pushDoc(d,n)}
     Sy.dirty=false;saveSy();
   });
 }
@@ -2052,6 +2052,10 @@ function syncStart(code,mustExist){
     if(!r||r.ok===false)throw new Error('bad');
     if(mustExist&&r.empty){throw new Error('notfound')}
     Sy.dirty=!S.sample;saveSy();
+    if(r.empty){
+      var d0=toDoc();if(!d0.classes)d0={v:3,classes:{},nt:{},tg:{},ph:{},arch:{}};
+      return pushDoc(d0,0).then(function(){Sy.state='ok';Sy.at=Date.now();Sy.err='';saveSy();renderSyncBadge();return syncNow()});
+    }
     return syncNow();
   });
 }

@@ -313,7 +313,7 @@ var DEF_TOOLS=[{k:'oral',l:'الأعمال الشفوية'},{k:'quiz',l:'الس�
 var LV={good:'ممتاز',mid:'جيد',bad:'يحتاج دعمًا',none:'لم تُرصد'};
 var NK='gradebook-notes-v1',DK1='gradebook-data-v1',DK2='gradebook-data-v2',BK='gradebook-lastbackup';
 var PK='gradebook-profile-v1',PDK='gradebook-pdf-v1';
-var S={pdf:{cols:{},tot:true,pct:true,lv:true,font:'plex',weight:'normal',color:'#0b6e6e',bw:false,size:'auto'},profile:{school:'',logo:'',sem:'',year:'',subject:'',teacher:'',supervisor:'',principal:''},tools:JSON.parse(JSON.stringify(DEF_TOOLS)),classes:[],view:'all',sample:true,src:'',th:{hi:85,lo:50},nextId:1,nt:{},noStore:false,
+var S={pdf:{cols:{},tot:true,pct:true,lv:true,font:'plex',weight:'normal',color:'#0b6e6e',bw:false,size:'auto'},profile:{school:'',logo:'',sem:'',year:'',subject:'',teacher:'',supervisor:'',principal:'',cc:'968'},tools:JSON.parse(JSON.stringify(DEF_TOOLS)),classes:[],view:'all',sample:true,src:'',th:{hi:85,lo:50},nextId:1,nt:{},noStore:false,
   tab:'students',sortK:'seq',sortDir:1,q:'',lvl:'',noteF:'',msgs:[],cur:-1,curTool:'',pendOnly:false,undo:[],mdActs:[]};
 var $=function(id){return document.getElementById(id)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -458,6 +458,7 @@ function leaveSample(src){
   Object.keys(S.nt).forEach(function(k){if(k.indexOf('s:')===0){move['r:'+k.slice(2)]=S.nt[k];delete S.nt[k]}});
   Object.keys(move).forEach(function(k){S.nt[k]=move[k]});
   var tmv={};Object.keys(S.tg||{}).forEach(function(k){if(k.indexOf('s:')===0){tmv['r:'+k.slice(2)]=S.tg[k];delete S.tg[k]}});Object.keys(tmv).forEach(function(k){S.tg[k]=tmv[k]});
+  var pmv={};Object.keys(S.ph||{}).forEach(function(k){if(k.indexOf('s:')===0){pmv['r:'+k.slice(2)]=S.ph[k];delete S.ph[k]}});Object.keys(pmv).forEach(function(k){S.ph[k]=pmv[k]});savePh();
   saveNotes();saveTags();
   S.sample=false;S.src=src||'بيانات مُدخلة يدويًا';
 }
@@ -932,7 +933,7 @@ function profileCard(){
     '<h3 style="margin:12px 0 8px;font-size:15px">قوالب جاهزة</h3><div class="row-actions"><button class="btn" type="button" data-ptpl="formal">رسمي</button><button class="btn" type="button" data-ptpl="color">ملوّن</button><button class="btn" type="button" data-ptpl="eco">اقتصادي (أبيض وأسود)</button></div>'+
     '<h3 style="margin:16px 0 8px;font-size:15px">الترويسة والتذييل</h3><div class="set-grid">'+f('school','اسم المدرسة','مثال: مدرسة النور')+f('subject','المادة','مثال: الرياضيات')+
     '<label>الفصل الدراسي<select data-prof="sem"><option value="">—</option><option'+(p.sem==='الفصل الأول'?' selected':'')+'>الفصل الأول</option><option'+(p.sem==='الفصل الثاني'?' selected':'')+'>الفصل الثاني</option></select></label>'+
-    f('year','العام الدراسي','مثال: 2026 / 2027')+f('teacher','اسم المعلم')+f('supervisor','اسم مشرف المادة')+f('principal','اسم مدير المدرسة')+'</div>'+
+    f('year','العام الدراسي','مثال: 2026 / 2027')+f('cc','رمز الدولة للواتساب','968')+f('teacher','اسم المعلم')+f('supervisor','اسم مشرف المادة')+f('principal','اسم مدير المدرسة')+'</div>'+
     '<div class="logo-row"><button class="btn" type="button" id="logoBtn">'+(p.logo?'تغيير شعار المدرسة':'رفع شعار المدرسة')+'</button>'+(p.logo?'<img src="'+p.logo+'" alt="شعار المدرسة" style="height:44px;max-width:90px;object-fit:contain;border:1px solid var(--line,#ccc);border-radius:6px;background:#fff;padding:2px"><button class="btn" type="button" id="logoDel">إزالة الشعار</button>':'<span class="sub">png أو jpg، يُصغَّر تلقائيًا</span>')+'<input type="file" id="logoFile" accept="image/*" hidden></div>'+
     '<h3 style="margin:16px 0 4px;font-size:15px">الأعمدة التي تظهر في الطباعة</h3><div class="chk-row">'+chk+'</div>'+
     '<h3 style="margin:8px 0 8px;font-size:15px">الخط والألوان</h3><div class="set-grid">'+
@@ -1291,7 +1292,7 @@ function openReport(id){
 /* ---------- النسخ الاحتياطي ---------- */
 function doBackup(){
   var notes={};Object.keys(S.nt).forEach(function(k){if(k.indexOf('r:')===0)notes[k]=S.nt[k]});
-  var data={app:'gradebook',v:2,date:new Date().toISOString(),data:snapshot(),notes:notes,profile:S.profile,pdf:S.pdf,tg:S.tg,tl:S.tagList,arch:S.arch};
+  var data={app:'gradebook',v:2,date:new Date().toISOString(),data:snapshot(),notes:notes,profile:S.profile,pdf:S.pdf,tg:S.tg,ph:S.ph,tl:S.tagList,arch:S.arch};
   var stamp=new Date().toISOString().slice(0,10);
   saveFile('نسخة-سجل-الدرجات-'+stamp+'.json',JSON.stringify(data)).then(function(){
     try{localStorage.setItem(BK,String(Date.now()))}catch(e){}
@@ -1312,7 +1313,7 @@ function doRestoreFile(f){
         close();pushUndo('استعادة نسخة احتياطية');
         load(d.data);S.sample=false;
         Object.keys(d.notes||{}).forEach(function(k){S.nt[k]=d.notes[k]});saveNotes();
-        if(d.tg){S.tg=d.tg;saveTags()}if(d.tl&&d.tl.length){S.tagList=d.tl;saveTagList()}if(d.arch){S.arch=d.arch;saveArch()}
+        if(d.tg){S.tg=d.tg;saveTags()}if(d.ph){S.ph=d.ph;savePh()}if(d.tl&&d.tl.length){S.tagList=d.tl;saveTagList()}if(d.arch){S.arch=d.arch;saveArch()}
         if(d.pdf&&typeof d.pdf==='object'){Object.keys(S.pdf).forEach(function(k){if(k in d.pdf)S.pdf[k]=d.pdf[k]});savePdf()}
         if(d.profile){Object.keys(S.profile).forEach(function(k){if(typeof d.profile[k]==='string')S.profile[k]=d.profile[k]});saveProfile()}
         persist();showTab('students');toast('تمت الاستعادة',true);
@@ -1460,7 +1461,7 @@ document.addEventListener('change',function(e){
     var oldKey=nkey(s),oldNote=S.nt[oldKey];
     s.name=el.value.trim();
     if(oldNote!=null&&s.name){delete S.nt[oldKey];S.nt[nkey(s)]=oldNote;saveNotes()}
-    if(s.name)moveTag(oldKey,nkey(s));
+    if(s.name){moveTag(oldKey,nkey(s));movePh(oldKey,nkey(s))}
     calc();persist();refreshTotals();renderHeader();return;
   }
   var cn=el.getAttribute&&el.getAttribute('data-cname');
@@ -1470,12 +1471,12 @@ document.addEventListener('change',function(e){
     if(nn===cl.name){el.value=nn;return}
     pushUndo('إعادة تسمية صف');leaveSample();
     var moves=[];
-    cl.students.forEach(function(s){var ok=nkeyFor(S.sample,cl.name,s.name);if(S.nt[ok]!=null||S.tg[ok])moves.push([ok,s])});
+    cl.students.forEach(function(s){var ok=nkeyFor(S.sample,cl.name,s.name);if(S.nt[ok]!=null||S.tg[ok]||S.ph[ok])moves.push([ok,s])});
     var others=S.classes.filter(function(x){return x!==cl});
     var final=nn,i=2;while(others.some(function(x){return x.name===final}))final=nn+' ('+(i++)+')';
     cl.name=final;el.value=final;
-    moves.forEach(function(m){var v=S.nt[m[0]],tv=S.tg[m[0]],nk=nkey(m[1]);delete S.nt[m[0]];delete S.tg[m[0]];if(v!=null)S.nt[nk]=v;if(tv)S.tg[nk]=tv});
-    saveNotes();saveTags();persist();renderClassBar();renderHeader();return;
+    moves.forEach(function(m){var v=S.nt[m[0]],tv=S.tg[m[0]],pv=S.ph[m[0]],nk=nkey(m[1]);delete S.nt[m[0]];delete S.tg[m[0]];delete S.ph[m[0]];if(v!=null)S.nt[nk]=v;if(tv)S.tg[nk]=tv;if(pv)S.ph[nk]=pv});
+    saveNotes();saveTags();savePh();persist();renderClassBar();renderHeader();return;
   }
   var tn=el.getAttribute&&el.getAttribute('data-tname');
   if(tn){var t=toolById(tn);if(!t)return;undoMark('تسمية أداة',4000);leaveSample();t.l=el.value.trim()||t.l;el.value=t.l;persist()}
@@ -1532,11 +1533,23 @@ window.addEventListener('hashchange',function(){showTab((location.hash||'').repl
 /* ====================== إضافات: وسوم، متعثرون، رسم، مشاركة، ملخص ====================== */
 var TGK='gradebook-tags-v1',TLK='gradebook-taglist-v1',ARK='gradebook-arch-v1',PINK='gradebook-pin-v1';
 var DEF_TAGS=['سلوك','واجب','تميّز','مشاركة','تواصل مع ولي الأمر','غياب'];
-S.tg={};S.tagList=DEF_TAGS.slice();S.arch=[];S.tagF='';
+var PHK='gradebook-phones-v1';
+S.tg={};S.tagList=DEF_TAGS.slice();S.arch=[];S.tagF='';S.ph={};
+try{S.ph=JSON.parse(localStorage.getItem(PHK)||'{}')||{}}catch(e){S.ph={}}
 try{S.tg=JSON.parse(localStorage.getItem(TGK)||'{}')||{}}catch(e){S.tg={}}
 try{var tl0=JSON.parse(localStorage.getItem(TLK)||'null');if(tl0&&tl0.length)S.tagList=tl0}catch(e){}
 try{S.arch=JSON.parse(localStorage.getItem(ARK)||'[]')||[]}catch(e){S.arch=[]}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){S.noStore=true}}
+function savePh(){lsSet(PHK,S.ph);syncMark()}
+function getPhone(s){return S.ph[nkey(s)]||''}
+function setPhone(s,v){var k=nkey(s);v=String(v||'').trim();if(v)S.ph[k]=v;else delete S.ph[k];savePh()}
+function movePh(ok,nk){if(ok!==nk&&S.ph[ok]){S.ph[nk]=S.ph[ok];delete S.ph[ok];savePh()}}
+function waNumber(raw){
+  var d=String(raw||'').replace(/[٠-٩]/g,function(c){return c.charCodeAt(0)-1632}).replace(/\D/g,'');
+  if(!d)return '';var cc=(S.profile.cc||'').replace(/\D/g,'');
+  if(d.indexOf('00')===0)d=d.slice(2);else if(d[0]==='0')d=cc+d.slice(1);else if(cc&&d.length<=9)d=cc+d;
+  return d;
+}
 function saveTags(){lsSet(TGK,S.tg);syncMark()}
 function saveTagList(){lsSet(TLK,S.tagList);syncMark()}
 function saveArch(){lsSet(ARK,S.arch);syncMark()}
@@ -1553,6 +1566,7 @@ function tagsHtml(s){
   var cur=getTags(s);
   var h='<div class="row2" style="margin-top:10px"><div style="font-weight:600;margin-bottom:6px">وسوم</div><div class="tagrow">'+
     S.tagList.map(function(t){return '<button type="button" class="tg'+(cur.indexOf(t)>-1?' on':'')+'" data-tag="'+esc(t)+'" aria-pressed="'+(cur.indexOf(t)>-1)+'">'+esc(t)+'</button>'}).join('')+'</div></div>';
+  h+='<label style="display:block;margin-top:12px">هاتف ولي الأمر (للواتساب)<input id="phone" type="tel" inputmode="tel" dir="ltr" value="'+esc(getPhone(s))+'" placeholder="مثال: 9XXXXXXX"></label>';
   h+='<div class="row-actions" style="margin-top:10px"><button class="btn ghost sm" type="button" data-parent="'+s.id+'">رسالة لولي الأمر / واتساب</button></div>';
   return h;
 }
@@ -1627,7 +1641,7 @@ function parentText(s){
   if(s.none)t+='لم تُرصد درجاته بعد.\n';
   else{
     t+='- المجموع: '+fmt(s.calc)+' من '+fmt(s.poss)+' ('+Math.round(s.pct)+'%)\n- المستوى: '+LV[s.lv]+'\n';
-    var w=strugglerInfo(s);if(w)t+='- ملاحظات: '+w.join('، ')+'\n';
+    var w=strugglerInfo(s);if(w)t+='- ملاحظات: '+w.join('، ').replace(/[\u2066-\u2069]/g,'')+'\n';
   }
   var nt=getNote(s);if(nt)t+='- ملاحظة المعلم: '+nt.replace(/\s+/g,' ')+'\n';
   t+='نأمل المتابعة والتعاون، وشكرًا لكم.'+(p.teacher?'\nالمعلم: '+p.teacher:'');
@@ -1636,9 +1650,9 @@ function parentText(s){
 function openParentMsg(id){
   var s=byId(id);if(!s)return;
   openModal({title:'رسالة لولي الأمر',
-    body:'<textarea id="pmsg" style="min-height:200px;width:100%">'+esc(parentText(s))+'</textarea><p class="sub" style="font-size:12px">يمكنك تعديل النص قبل الإرسال.</p>',
+    body:'<textarea id="pmsg" style="min-height:200px;width:100%">'+esc(parentText(s))+'</textarea><label style="display:block;margin-top:8px">هاتف ولي الأمر (اختياري، يُحفظ للمرة القادمة)<input id="pmPhone" type="tel" inputmode="tel" dir="ltr" value="'+esc(getPhone(s))+'" placeholder="مثال: 9XXXXXXX"></label><p class="sub" style="font-size:12px">إن تركت الرقم فارغًا يفتح واتساب لتختار جهة الاتصال بنفسك.</p>',
     actions:[
-      {label:'فتح واتساب',fn:function(close){var t=$('pmsg').value;close();openUrl('https://wa.me/?text='+encodeURIComponent(t))}},
+      {label:'فتح واتساب',fn:function(close){var t=$('pmsg').value,ph=$('pmPhone').value;if(ph!==getPhone(s))setPhone(s,ph);var n=waNumber(ph);close();openUrl('https://wa.me/'+n+'?text='+encodeURIComponent(t))}},
       {label:'مشاركة',kind:'ghost',fn:function(close){var t=$('pmsg').value;close();shareText(t)}},
       {label:'نسخ',kind:'ghost',fn:function(close){var t=$('pmsg').value;try{navigator.clipboard.writeText(t).then(function(){toast('تم نسخ الرسالة',false)})}catch(e){toast('تعذّر النسخ',false)}close()}},
       {label:'إغلاق',kind:'ghost',fn:function(close){close()}}]});
@@ -1888,7 +1902,7 @@ function keyify(){
 }
 function toDoc(){
   if(S.sample)return {};
-  var d={v:3,tools:S.tools,th:S.th,src:S.src,classes:{},nt:{},tg:{},profile:S.profile,pdf:S.pdf,tl:S.tagList,arch:{}};
+  var d={v:3,tools:S.tools,th:S.th,src:S.src,classes:{},nt:{},tg:{},ph:{},profile:S.profile,pdf:S.pdf,tl:S.tagList,arch:{}};
   if(!S.sample){
     keyify();
     S.classes.forEach(function(c,ci){
@@ -1898,6 +1912,7 @@ function toDoc(){
     });
     d.nt=realNt(S.nt);
     Object.keys(S.tg).forEach(function(k){if(k.indexOf('r:')===0)d.tg[k]=S.tg[k]});
+    Object.keys(S.ph).forEach(function(k){if(k.indexOf('r:')===0)d.ph[k]=S.ph[k]});
     S.arch.forEach(function(a){d.arch[a.id]=a});
   }
   return JSON.parse(JSON.stringify(d));
@@ -1937,14 +1952,14 @@ function applyDoc(d){
     var vc=null;S.classes.forEach(function(c){if(c._k===viewKey)vc=c});
     S.view=(wasAll&&S.classes.length>1)?'all':(vc?vc.id:(S.classes[0]?S.classes[0].id:'all'));
     var kept={};Object.keys(S.nt).forEach(function(k){if(k.indexOf('s:')===0)kept[k]=S.nt[k]});
-    S.nt=Object.assign(kept,d.nt||{});S.tg=Object.assign({},d.tg||{});
+    S.nt=Object.assign(kept,d.nt||{});S.tg=Object.assign({},d.tg||{});S.ph=Object.assign({},d.ph||{});
     if(d.tl&&d.tl.length)S.tagList=d.tl;
     S.arch=Object.keys(d.arch||{}).map(function(k){return d.arch[k]}).sort(function(a,b){return b.date-a.date});
     if(d.profile)Object.keys(S.profile).forEach(function(k){if(typeof d.profile[k]==='string')S.profile[k]=d.profile[k]});
     if(d.pdf)Object.keys(S.pdf).forEach(function(k){if(k in d.pdf)S.pdf[k]=d.pdf[k]});
     if(stuPath){var pp=stuPath.split('|');S.classes.forEach(function(c){if(c._k===pp[0])c.students.forEach(function(s){if(s._k===pp[1])S.cur=s.id})})}
     try{localStorage.setItem(DK2,JSON.stringify(snapshot()))}catch(e){}
-    lsSet(NK,S.nt);lsSet(TGK,S.tg);lsSet(TLK,S.tagList);lsSet(ARK,S.arch);lsSet(PK,S.profile);lsSet(PDK,S.pdf);
+    lsSet(NK,S.nt);lsSet(TGK,S.tg);lsSet(PHK,S.ph);lsSet(TLK,S.tagList);lsSet(ARK,S.arch);lsSet(PK,S.profile);lsSet(PDK,S.pdf);
     calc();
   }finally{Sy.applying=false}
   var ae=document.activeElement,editing=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
@@ -1969,6 +1984,7 @@ function pushDoc(doc,n){
 function cycle(n){
   return rpc('gb_pull',{p_hash:codeHash(),p_ver:Sy.ver}).then(function(r){
     if(!r||r.ok===false)throw new Error('pull');
+    if(r.empty&&Sy.ver>0){syncStop();if(S.tab==='settings')renderSettings();toast('حُذفت النسخة السحابية، فُصل هذا الجهاز وبياناته باقية',false);return}
     if(r.data){
       return decodeDoc(r.data).then(function(remote){
         var local=toDoc(),merged=merge3(Sy.base||{},local,remote);
@@ -2025,8 +2041,8 @@ function syncCard(){
   }else{
     h+='<p class="sub">الحالة: <b id="syncStat"></b>'+(Sy.at?' · آخر مزامنة '+ago(Sy.at):'')+'</p>';
     h+='<div class="codebox"><div class="sub" style="font-size:13px">رمز الدخول (احتفظ به سريًّا، فمن يملكه يصل لبياناتك)</div><div class="code" id="codeShow" dir="ltr">'+(S.showCode?esc(fmtCode(Sy.code)):'••••-••••-••••-••••')+'</div><div class="row-actions"><button class="btn ghost sm" type="button" id="codeToggle">'+(S.showCode?'إخفاء':'إظهار')+'</button><button class="btn ghost sm" type="button" id="codeCopy">نسخ الرمز</button><button class="btn ghost sm" type="button" id="codeShare">مشاركة الرمز</button></div></div>';
-    h+='<div class="row-actions" style="margin-top:10px"><button class="btn" type="button" id="syncNowBtn">مزامنة الآن</button><button class="btn ghost" type="button" id="syncOff">فصل هذا الجهاز</button></div>';
-    h+='<p class="sub" style="font-size:13px;margin-top:8px">لربط جهاز جديد: ثبّت التطبيق عليه، ثم «المزامنة ← لدي رمز» وأدخل الرمز أعلاه. «فصل هذا الجهاز» يوقف المزامنة هنا فقط ويُبقي بياناتك.</p>';
+    h+='<div class="row-actions" style="margin-top:10px"><button class="btn" type="button" id="syncNowBtn">مزامنة الآن</button><button class="btn ghost" type="button" id="syncOff">فصل هذا الجهاز</button><button class="btn danger" type="button" id="syncWipe">حذف النسخة السحابية</button></div>';
+    h+='<p class="sub" style="font-size:13px;margin-top:8px">«حذف النسخة السحابية» يمسح البيانات من الخادم نهائيًا ويفصل الأجهزة الأخرى عند مزامنتها التالية، وتبقى نسخ كل جهاز المحلية. لربط جهاز جديد: ثبّت التطبيق عليه، ثم «المزامنة ← لدي رمز» وأدخل الرمز أعلاه. «فصل هذا الجهاز» يوقف المزامنة هنا فقط ويُبقي بياناتك.</p>';
   }
   return h+'</section>';
 }
@@ -2071,6 +2087,11 @@ document.addEventListener('click',function(e){
   if(id==='codeShare'){shareText('رمز دخول سجل الدرجات: '+fmtCode(Sy.code));return}
   if(id==='syncNowBtn'){syncNow().then(function(){if(S.tab==='settings')renderSettings()});return}
   if(id==='syncOff'){twoStep(t,'تأكيد الفصل',function(){syncStop();renderSettings();toast('فُصل هذا الجهاز عن المزامنة وبقيت بياناته',false)});return}
+  if(id==='syncWipe'){twoStep(t,'تأكيد: حذف نهائي من السحابة',function(){
+    rpc('gb_wipe',{p_hash:codeHash()}).then(function(r){
+      if(r&&r.ok){syncStop();renderSettings();toast('حُذفت النسخة السحابية وفُصل هذا الجهاز. بياناتك المحلية باقية',false)}else toast('تعذّر الحذف',false)
+    },function(){toast('تعذّر الاتصال بالخادم',false)});
+  });return}
   /* قفل */
   if(id==='pinSet'){
     var a=$('pin1').value,b=$('pin2').value;
@@ -2096,6 +2117,7 @@ document.addEventListener('change',function(e){
   if(el.id==='tagF'){S.tagF=el.value;renderTable();return}
   if(el.getAttribute&&el.getAttribute('data-auto')){var d=pinData();if(d){d.auto=+el.value;pinSave(d);resetIdle()}return}
 });
+document.addEventListener('input',function(e){if(e.target.id==='phone'&&S.cur>-1){var z=byId(S.cur);if(z)setPhone(z,e.target.value)}});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id==='tagNew'){e.preventDefault();var b=$('tagAdd');if(b)b.click()}});
 $('syncBadge').addEventListener('click',function(){showTab('settings');setTimeout(function(){var el=$('syncCard');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},80)});
 

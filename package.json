@@ -1,0 +1,19 @@
+{
+  "name": "gradebook-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "سجل درجات الطلاب - تطبيق أندرويد (Capacitor)",
+  "scripts": {
+    "build:www": "python3 scripts/build-www.py",
+    "sync": "cap sync android",
+    "apk": "cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3"
+  }
+}

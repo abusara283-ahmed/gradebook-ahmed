@@ -1,0 +1,7 @@
+{
+  "appId": "com.alhattali.gradebook",
+  "appName": "سجل الدرجات",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false }
+}

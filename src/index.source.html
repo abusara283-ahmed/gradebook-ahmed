@@ -254,6 +254,10 @@ body.locked .wrap{display:none}
 .pg table.pgt{min-width:0;width:100%;table-layout:fixed;border-collapse:collapse}
 .pg table.pgt th{background:var(--pcl,#eef3f5);color:#33424f;font-size:12px;padding:6px 8px;border:1px solid #d5dde3;height:44px;white-space:normal}
 .pg table.pgt td{padding:0 8px;border:1px solid #d5dde3;height:var(--rh,34px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:var(--fs,13px);color:#111}
+.pg table.pgt td.nmc{text-overflow:clip;padding:0 10px}
+.pg table.pgt tbody tr:nth-child(even) td{background:var(--pcz,#f6f9fa)}
+.pg table.pgt thead th{border-bottom:2px solid var(--pc,#0b6e6e)}
+.pg table.pgt td:first-child{color:#7a8794;font-size:calc(var(--fs,13px) - 1px)}
 .pg table.pgt td.n2{white-space:normal;font-size:calc(var(--fs,13px) - 2px);line-height:1.25}
 .pg.cmp .ph{min-height:56px;padding:4px 0 6px;margin-bottom:6px}.pg.cmp .ph-r .lg{max-height:46px}.pg.cmp .ph-school{font-size:16px}.pg.cmp .ph-l{line-height:1.4;font-size:11px}.pg.cmp table.pgt th{height:34px;padding:2px 6px;font-size:11px}.pg.cmp .sline{height:14px}.pg.cmp .sn{min-height:16px;font-size:12px}.pg.cmp .pgf2{bottom:8px}.pg.cmp .fb{margin-top:4px}
 .pg .lv{font-weight:700}
@@ -1133,7 +1137,7 @@ function pdfStyle(){
   var P=S.pdf,f=PDFONTS[P.font]||PDFONTS.plex,c=P.bw?'#222222':(P.color||'#0b6e6e');
   var a=hex2rgb(c),lum=(0.299*a[0]+0.587*a[1]+0.114*a[2]);
   var w={normal:[400,700],medium:[500,700],bold:[700,800]}[P.weight]||[400,700];
-  return '--pc:'+c+';--pcd:'+mixHex(c,.35,0)+';--pcl:'+(P.bw?'#eeeeee':mixHex(c,.9,255))+';--pc2:'+mixHex(c,.45,255)+';--pct:'+(lum>170?'#111111':'#ffffff')+';--pf:\''+f.n+'\',\'IBM Plex Sans Arabic\',system-ui,sans-serif;--pw:'+w[0]+';--pwh:'+w[1];
+  return '--pc:'+c+';--pcd:'+mixHex(c,.35,0)+';--pcl:'+(P.bw?'#eeeeee':mixHex(c,.9,255))+';--pcz:'+(P.bw?'#f6f6f6':mixHex(c,.95,255))+';--pc2:'+mixHex(c,.45,255)+';--pct:'+(lum>170?'#111111':'#ffffff')+';--pf:\''+f.n+'\',\'IBM Plex Sans Arabic\',system-ui,sans-serif;--pw:'+w[0]+';--pwh:'+w[1];
 }
 function pgCls(){return S.pdf.bw?' bw':''}
 function pdfHeadHtml(cname,preview){
@@ -1155,6 +1159,19 @@ function pdfFootHtml(left){
   }).join('');
   return '<div class="pgf2"><div class="sigs">'+sig+'</div><div class="fb"><span>'+left+'</span><span>الغائب يُحسب صفرًا والمعفى لا يُحتسب</span></div></div>';
 }
+function nameCol(list,fs,nt,P,wn){
+  var f=PDFONTS[P.font]||PDFONTS.plex,wt={normal:[400],medium:[500],bold:[700]}[P.weight]||[500];
+  var cv=nameCol.cv||(nameCol.cv=document.createElement('canvas')),cx=cv.getContext('2d');
+  var mx=0;
+  cx.font=Math.max(500,wt[0])+' '+fs+'px "'+f.n+'","IBM Plex Sans Arabic",sans-serif';
+  list.forEach(function(s){var w=cx.measureText(dname(s)).width;if(w>mx)mx=w});
+  var need=Math.ceil(mx*1.08)+22;
+  var fixed=34+(P.tot!==false?60:0)+(P.pct!==false?54:0)+(P.lv!==false?72:0)+(wn?190:0);
+  var cap=Math.max(150,730-fixed-nt*52);
+  var w=Math.max(150,Math.min(need,cap)),sz=fs;
+  if(need>cap)sz=Math.max(8.5,+(fs*(cap-22)/(need-22)).toFixed(1));
+  return {w:Math.round(w),fs:sz.toFixed(1)};
+}
 function tablePagesHtml(classes,withNotes,preview){
   var P=S.pdf,tools=S.tools.filter(function(t){return P.cols[t.k]!==false});
   var mul={sm:.9,lg:1.12}[P.size]||1,out=[];
@@ -1164,13 +1181,14 @@ function tablePagesHtml(classes,withNotes,preview){
     var avail=1067-(cmp?82:112)-30-(cmp?80:95)-48-8;
     var rh=Math.max(16,Math.min(36,Math.floor(avail/per)));
     var fs=Math.min(rh-4,Math.max(9,Math.min(13,rh*0.6))*mul);
+    var nm=nameCol(list,fs,tools.length,P,withNotes);
     for(var pi=0;pi<np;pi++){
       var rows=list.slice(pi*per,(pi+1)*per);
       var h='<div class="pg port'+(withNotes?' notes':'')+(cmp?' cmp':'')+pgCls()+'" style="'+pdfStyle()+';--rh:'+rh+'px;--fs:'+fs.toFixed(1)+'px">'+pdfHeadHtml(c.name,preview)+pdfTitleHtml('سجل درجات الطلاب');
-      h+='<table class="pgt"><colgroup><col style="width:34px"><col style="width:160px">'+tools.map(function(){return '<col>'}).join('')+(P.tot!==false?'<col style="width:60px">':'')+(P.pct!==false?'<col style="width:54px">':'')+(P.lv!==false?'<col style="width:72px">':'')+(withNotes?'<col style="width:190px">':'')+'</colgroup>';
+      h+='<table class="pgt"><colgroup><col style="width:34px"><col style="width:'+nm.w+'px">'+tools.map(function(){return '<col>'}).join('')+(P.tot!==false?'<col style="width:60px">':'')+(P.pct!==false?'<col style="width:54px">':'')+(P.lv!==false?'<col style="width:72px">':'')+(withNotes?'<col style="width:190px">':'')+'</colgroup>';
       h+='<thead><tr><th>م</th><th>الطالب</th>'+tools.map(function(t){return '<th>'+esc(t.l)+'<br><span style="font-weight:400">من '+fmt(+c.max[t.k])+'</span></th>'}).join('')+(P.tot!==false?'<th>المجموع<br><span style="font-weight:400">من '+fmt(c.maxTotal)+'</span></th>':'')+(P.pct!==false?'<th>النسبة</th>':'')+(P.lv!==false?'<th>المستوى</th>':'')+(withNotes?'<th>ملاحظة</th>':'')+'</tr></thead><tbody>';
       rows.forEach(function(s){
-        h+='<tr><td style="text-align:center">'+s.seq+'</td><td>'+esc(dname(s))+'</td>'+tools.map(function(t){
+        h+='<tr><td style="text-align:center">'+s.seq+'</td><td class="nmc" style="font-size:'+nm.fs+'px">'+esc(dname(s))+'</td>'+tools.map(function(t){
           var x=statusTxt(s,t.k);return '<td style="text-align:center">'+(x===''?'—':esc(x==='غ'?'غائب':x))+'</td>';
         }).join('')+(P.tot!==false?'<td style="text-align:center"><b>'+(s.none?'—':fmt(s.calc))+'</b></td>':'')+(P.pct!==false?'<td style="text-align:center">'+(s.none?'—':Pp(s.pct))+'</td>':'')+(P.lv!==false?'<td class="lv '+s.lv+'" style="text-align:center">'+LV[s.lv]+'</td>':'')+(withNotes?'<td class="n2">'+esc(getNote(s))+'</td>':'')+'</tr>';
       });
@@ -1197,6 +1215,25 @@ function reportPageHtml(s,withNote){
   h+=pdfFootHtml(esc(c.name))+'</div>';
   return h;
 }
+/* html2canvas يقطّع الكلمة إلى أحرف منفصلة إذا امتدّت على أكثر من مستطيل، فتظهر الحروف العربية غير متصلة؛ ندمج المستطيلات في مستطيل واحد */
+function fixClone(doc){
+  try{
+    var R=doc.defaultView.Range.prototype,orig=R.getClientRects;
+    R.getClientRects=function(){
+      var l=orig.call(this);
+      if(!l||l.length<2)return l;
+      var a=[].slice.call(l).filter(function(r){return r.width>0});
+      if(a.length<2)return l;
+      var L=Math.min.apply(0,a.map(function(r){return r.left})),T=Math.min.apply(0,a.map(function(r){return r.top})),
+          Rr=Math.max.apply(0,a.map(function(r){return r.right})),B=Math.max.apply(0,a.map(function(r){return r.bottom}));
+      var u={left:L,top:T,right:Rr,bottom:B,width:Rr-L,height:B-T,x:L,y:T};
+      return [u];
+    };
+    var st=doc.createElement('style');
+    st.textContent='.pg,.pg *{letter-spacing:0!important;word-spacing:0!important;font-variant-ligatures:normal;font-kerning:normal;text-rendering:auto}';
+    doc.head.appendChild(st);
+  }catch(e){}
+}
 function pagesToPdf(pageHtmls,onProgress){
   var stage=$('stage');
   stage.innerHTML=pageHtmls.join('');
@@ -1208,7 +1245,7 @@ function pagesToPdf(pageHtmls,onProgress){
     for(var i=0;i<els.length;i++)(function(i){
       chain=chain.then(function(){
         if(onProgress)onProgress(i+1,els.length);
-        return window.html2canvas(els[i],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false}).then(function(cv){
+        return window.html2canvas(els[i],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,onclone:fixClone}).then(function(cv){
           var land=els[i].classList.contains('land');
           if(!doc)doc=new JS({orientation:land?'landscape':'portrait',unit:'mm',format:'a4'});
           else doc.addPage('a4',land?'landscape':'portrait');

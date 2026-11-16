@@ -1232,8 +1232,9 @@ function fixClone(doc){
       var u={left:L,top:T,right:Rr,bottom:B,width:Rr-L,height:B-T,x:L,y:T};
       return [u];
     };
+    var sg=doc.getElementById('stage');if(sg){sg.style.position='absolute';sg.style.left='0px';sg.style.top='0px'}
     var st=doc.createElement('style');
-    st.textContent='.pg,.pg *{letter-spacing:0!important;word-spacing:0!important;font-variant-ligatures:normal;font-kerning:normal;text-rendering:auto}';
+    st.textContent='html,body,#stage,.pg,.pg *{-webkit-text-size-adjust:100%;text-size-adjust:100%}.pg,.pg *{letter-spacing:0!important;word-spacing:0!important;font-variant-ligatures:normal;font-kerning:normal;text-rendering:auto}';
     doc.head.appendChild(st);
   }catch(e){}
 }
@@ -1248,7 +1249,7 @@ function pagesToPdf(pageHtmls,onProgress){
     for(var i=0;i<els.length;i++)(function(i){
       chain=chain.then(function(){
         if(onProgress)onProgress(i+1,els.length);
-        return window.html2canvas(els[i],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,onclone:fixClone}).then(function(cv){
+        return window.html2canvas(els[i],{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,onclone:fixClone,windowWidth:1280,windowHeight:1500,scrollX:0,scrollY:0}).then(function(cv){
           var land=els[i].classList.contains('land');
           if(!doc)doc=new JS({orientation:land?'landscape':'portrait',unit:'mm',format:'a4'});
           else doc.addPage('a4',land?'landscape':'portrait');

@@ -900,6 +900,7 @@ function renderSettings(){
   }
 
   h+=syncCard()+pinCard()+archCard()+tagsCard()+profileCard();
+  h+='<div style="text-align:center;font-size:12px;opacity:.6;margin:6px 0 14px">إصدار التطبيق: 22-11-2026 · تصدير PDF محسَّن</div>';
   var last=0;try{last=+localStorage.getItem(BK)||0}catch(e){}
   h+='<section class="card"><h2>الملف والنسخ الاحتياطي</h2><div class="row-actions">'+
     '<button class="btn ghost" type="button" id="upload2">رفع ملف إكسل</button>'+

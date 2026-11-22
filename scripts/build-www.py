@@ -13,6 +13,10 @@ rep('<meta name="viewport" content="width=device-width, initial-scale=1">','<met
 rep('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','lib/xlsx.full.min.js')
 rep('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js','lib/html2canvas.min.js')
 rep('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','lib/jspdf.umd.min.js')
+rep('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js','lib/qrcode.min.js')
+rep('https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js','lib/jsQR.min.js')
+rep('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','lib/pdf.min.js')
+rep('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js','lib/pdf.worker.min.js')
 rep("if(document.getElementById(id))return res();","if(window.GB_LOCAL||document.getElementById(id))return res();")
 rep("<script>\n(function(){","<script>window.GB_LOCAL=1;</script>\n<script>\n(function(){") if "<script>\n(function(){" in s else None
 rep("renderSyncBadge();if(pinData())","if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&!isNative()){navigator.serviceWorker.register('sw.js').catch(function(){})}\nrenderSyncBadge();if(pinData())")

@@ -256,6 +256,22 @@ body.locked .wrap{display:none}
 .pg table.pgt{min-width:0;width:100%;table-layout:fixed;border-collapse:collapse}
 .pg table.pgt th{background:var(--pcl,#eef3f5);color:#33424f;font-size:12px;padding:6px 8px;border:1px solid #d5dde3;height:44px;white-space:normal}
 .pg table.pgt td{padding:0 8px;border:1px solid #d5dde3;height:var(--rh,34px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:var(--fs,13px);color:#111}
+.pg.cdpg{padding:20px}
+.cdgrid{display:grid;direction:rtl;align-content:start}
+.cd{box-sizing:border-box;border:1.5px dashed #9aa8b3;border-radius:10px;padding:8px 12px;overflow:hidden;position:relative;background:#fff}
+.cd::before{content:'';position:absolute;top:0;inset-inline:0;height:4px;background:linear-gradient(270deg,var(--pc,#0b6e6e),var(--pc2,#4cc3c0))}
+.cd-top{display:flex;justify-content:space-between;color:#5b6b7a;font-size:.85em;margin-top:2px}
+.cd-cls{font-weight:700;color:var(--pc,#0b6e6e)}
+.cd-name{font-weight:700;margin:3px 0 4px;line-height:1.3;white-space:nowrap;overflow:hidden}
+.cd-sum{display:flex;justify-content:space-between;gap:6px;background:var(--pcz,#f6f9fa);border-radius:8px;padding:5px 8px;margin-bottom:5px;text-align:center}
+.cd-sum b{font-size:1.25em}
+.cd-r{display:flex;align-items:center;gap:6px;border-bottom:1px solid #e6ecef}
+.cd-l{flex:1;white-space:nowrap;overflow:hidden}
+.cd-v{font-weight:700;min-width:62px;text-align:center}
+.cd-b{width:52px;height:7px;background:#e3e9ee;border-radius:4px;overflow:hidden;display:block}
+.cd-b i{display:block;height:100%;background:var(--pc,#0b6e6e)}
+.cd-ev{margin-top:5px;font-size:.92em;color:#333;line-height:1.35}
+.cd-note{color:#5b6b7a;font-size:.85em}
 .pg table.pgt td.nmc{text-overflow:clip;padding:0 10px}
 .pg table.pgt tbody tr:nth-child(even) td{background:var(--pcz,#f6f9fa)}
 .pg table.pgt thead th{border-bottom:2px solid var(--pc,#0b6e6e)}
@@ -1219,6 +1235,43 @@ function reportPageHtml(s,withNote){
   h+=pdfFootHtml(esc(c.name))+'</div>';
   return h;
 }
+/* ---------- بطاقات الطلاب ---------- */
+var CARD_GRID={1:[1,1],2:[1,2],4:[2,2],6:[2,3],8:[2,4],9:[3,3],10:[2,5],12:[3,4]};
+function cardHtml(s,w,h,o){
+  var c=s.c,T=S.tools,avg=null,big=h>=420;
+  var evalH=o.ev?(h>=300?34:0):0,noteH=o.notes&&(getNote(s)||getTags(s).length)?(h>=300?30:0):0;
+  var fixed=(big?96:78)+(big?58:46)+evalH+noteH+16;
+  var rowH=Math.max(15,Math.min(40,(h-fixed)/Math.max(1,T.length)));
+  var fs=Math.max(9,Math.min(15,rowH*0.5)),nfs=Math.max(13,Math.min(26,Math.min(h,w*1.2)/12));
+  try{var cx=(nameCol.cv||(nameCol.cv=document.createElement('canvas'))).getContext('2d');cx.font='700 '+nfs+'px "IBM Plex Sans Arabic",sans-serif';var tw=cx.measureText(dname(s)).width*1.06;if(tw>w-28)nfs=Math.max(10,nfs*(w-28)/tw)}catch(e){}
+  var p=S.profile,st='width:'+w+'px;height:'+h+'px;';
+  var x='<div class="cd" style="'+st+'font-size:'+fs+'px">';
+  x+='<div class="cd-top"><span>'+esc(p.school||'')+'</span><span class="cd-cls">'+esc(c.name)+'</span></div>';
+  x+='<div class="cd-name" style="font-size:'+nfs+'px">'+esc(dname(s))+'</div>';
+  x+='<div class="cd-sum"><div><div class="ps">المجموع</div><b>'+(s.none?'—':fmt(s.calc))+'</b>'+(s.none?'':'<span class="ps"> / '+fmt(s.poss)+'</span>')+'</div><div><div class="ps">النسبة</div><b>'+(s.none?'—':Pp(s.pct))+'</b></div><div><div class="ps">المستوى</div><b class="lv '+s.lv+'">'+LV[s.lv]+'</b></div><div><div class="ps">الترتيب</div><b>'+(s.rank==null?'—':s.rank)+'</b></div></div>';
+  x+='<div class="cd-rows">';
+  T.forEach(function(t){
+    var v=s.g[t.k],xx=s.x[t.k],m=+c.max[t.k]||1,pc=(v!=null&&!xx)?Math.min(100,v/m*100):0;
+    x+='<div class="cd-r" style="height:'+rowH+'px"><span class="cd-l">'+esc(t.l)+'</span><span class="cd-v">'+(xx==='a'?'غائب':xx==='e'?'معفى':(v==null?'—':fmt(v)))+'<span class="ps"> / '+fmt(m)+'</span></span><span class="cd-b"><i style="width:'+pc+'%"></i></span></div>';
+  });
+  x+='</div>';
+  if(evalH)x+='<div class="cd-ev">'+esc(evalText(s))+'.</div>';
+  if(noteH)x+='<div class="cd-ev cd-note">'+(getTags(s).length?esc(getTags(s).join(' • '))+' — ':'')+esc(getNote(s)).replace(/\n/g,' ')+'</div>';
+  return x+'</div>';
+}
+function cardsPagesHtml(classes,per,o){
+  var g=CARD_GRID[per]||CARD_GRID[6],cols=g[0],rows=g[1],gap=8,pw=794-40,ph=1123-40;
+  var w=Math.floor((pw-gap*(cols-1))/cols),h=Math.floor((ph-gap*(rows-1))/rows),pages=[];
+  classes.forEach(function(c){
+    var list=c.students.slice().sort(bySeq).map(function(z){return z});
+    for(var i=0;i<list.length;i+=per){
+      var chunk=list.slice(i,i+per),hh='<div class="pg port cdpg'+pgCls()+'" style="'+pdfStyle()+'"><div class="phb"></div><div class="cdgrid" style="grid-template-columns:repeat('+cols+',1fr);gap:'+gap+'px">';
+      chunk.forEach(function(z){hh+=cardHtml(z,w,h,o)});
+      pages.push(hh+'</div></div>');
+    }
+  });
+  return pages;
+}
 /* html2canvas يقطّع الكلمة إلى أحرف منفصلة إذا امتدّت على أكثر من مستطيل، فتظهر الحروف العربية غير متصلة؛ ندمج المستطيلات في مستطيل واحد */
 function fixClone(doc){
   try{
@@ -1287,7 +1340,8 @@ function colsFieldset(){
 function openExport(){
   var multi=S.classes.length>1,c=curClass();
   openModal({title:'تصدير الجدول',
-    body:'<fieldset class="grp"><legend>الصيغة</legend><label class="opt"><input type="radio" name="xf" value="xlsx" checked> Excel (ورقة لكل صف)</label><label class="opt"><input type="radio" name="xf" value="pdf"> PDF (ورقة A4 رأسية)</label><label class="opt"><input type="radio" name="xf" value="reports"> تقارير الطلاب (ملف PDF واحد لكل الصف)</label><label class="opt"><input type="radio" name="xf" value="summary"> ملخص أداء الصف (PDF)</label></fieldset>'+
+    body:'<fieldset class="grp"><legend>الصيغة</legend><label class="opt"><input type="radio" name="xf" value="xlsx" checked> Excel (ورقة لكل صف)</label><label class="opt"><input type="radio" name="xf" value="pdf"> PDF (ورقة A4 رأسية)</label><label class="opt"><input type="radio" name="xf" value="reports"> تقارير الطلاب (ملف PDF واحد لكل الصف)</label><label class="opt"><input type="radio" name="xf" value="cards"> بطاقات الطلاب (عدة بطاقات في الورقة الواحدة)</label><label class="opt"><input type="radio" name="xf" value="summary"> ملخص أداء الصف (PDF)</label></fieldset>'+
+    '<fieldset class="grp" id="cardOpts" hidden><legend>خيارات البطاقات</legend><label class="opt">عدد البطاقات في كل ورقة A4: <select id="cpp">'+[1,2,4,6,8,9,10,12].map(function(n){return '<option value="'+n+'"'+(n===(S.pdf.cpp||6)?' selected':'')+'>'+n+'</option>'}).join('')+'</select></label><label class="opt"><input type="checkbox" id="cev" checked> إظهار التقييم المختصر</label><p class="sub" style="margin:4px 0 0">تُطبع بطاقات كل طلاب الصف (أو الصفوف المحددة في النطاق) مرتبة بالرقم، وبينها حدود للقص. تُضمَّن الملاحظات عند تفعيل خيار «تضمين الملاحظات» أدناه.</p></fieldset>'+
     (multi?'<fieldset class="grp"><legend>النطاق</legend><label class="opt"><input type="radio" name="xs" value="cur"'+(c?' checked':' disabled')+'> الصف الحالي'+(c?' ('+esc(c.name)+')':'')+'</label><label class="opt"><input type="radio" name="xs" value="all"'+(c?'':' checked')+'> كل الصفوف</label></fieldset>':'')+
     colsFieldset()+'<label class="opt"><input type="checkbox" id="xn"> تضمين الملاحظات <span class="sub">(قد تكون خاصة، فلا تُضمّن إن كنت سترسل الملف لغيرك)</span></label><p class="sub" style="margin:8px 0 0">تصميم PDF (الخط والألوان والترويسة) من الإعدادات.</p>',
     actions:[
@@ -1305,6 +1359,11 @@ function openExport(){
           close();var allp=[];cls.forEach(function(c){c.students.slice().sort(bySeq).forEach(function(z){allp.push(reportPageHtml(z,notes))})});
           if(!allp.length){toast('لا يوجد طلاب',false);return}
           runPdf(allp,'تقارير-الطلاب-'+stamp+'.pdf',$('exportBtn'));
+        }else if(fmtv==='cards'){
+          var per=+$('cpp').value||6;S.pdf.cpp=per;savePdf();
+          var cp=cardsPagesHtml(cls,per,{notes:notes,ev:$('cev').checked});
+          if(!cp.length){toast('لا يوجد طلاب',false);return}
+          close();runPdf(cp,'بطاقات-الطلاب-'+stamp+'.pdf',$('exportBtn'));
         }else if(fmtv==='summary'){
           close();runPdf(cls.map(summaryPageHtml),'ملخص-الصفوف-'+stamp+'.pdf',$('exportBtn'));
         }else{
@@ -1314,6 +1373,7 @@ function openExport(){
         }
       }},
       {label:'إلغاء',kind:'ghost',fn:function(close){close()}}]});
+  (function(){function sync(){var v=document.querySelector('input[name=xf]:checked').value;$('cardOpts').hidden=v!=='cards'}document.querySelectorAll('input[name=xf]').forEach(function(i){i.addEventListener('change',sync)})})();
 }
 function openReport(id){
   var s=byId(id);if(!s)return;

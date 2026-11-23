@@ -281,7 +281,7 @@ body.locked .wrap{display:none}
 .wkfull{background:#eef1f4;border-radius:8px;overflow:hidden;min-height:120px;text-align:center}
 .wkfull img{max-width:100%;max-height:60vh}
 .wkjobs{margin-top:10px;max-height:200px;overflow:auto;font-size:14px;display:flex;flex-direction:column;gap:3px}
-.wkj.ok{color:#17794a}.wkj.rv{color:#8a5a00}.wkj.bad{color:#b3261e}
+.wkj.sg{color:#0b5fa5}.wkj.ok{color:#17794a}.wkj.rv{color:#8a5a00}.wkj.bad{color:#b3261e}
 .wkrvlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .wkrv{display:flex;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px}
 .wkrv .wkth{width:84px;flex:none}
@@ -2030,7 +2030,7 @@ function keyify(){
 }
 function toDoc(){
   if(S.sample)return {};
-  var d={v:3,tools:S.tools,th:S.th,src:S.src,classes:{},nt:{},tg:{},ph:{},profile:S.profile,pdf:S.pdf,tl:S.tagList,arch:{},wk:{}};
+  var d={v:3,tools:S.tools,th:S.th,src:S.src,classes:{},nt:{},tg:{},ph:{},profile:S.profile,pdf:S.pdf,tl:S.tagList,arch:{},wk:{},al:{}};
   if(!S.sample){
     keyify();
     S.classes.forEach(function(c,ci){
@@ -2042,7 +2042,7 @@ function toDoc(){
     Object.keys(S.tg).forEach(function(k){if(k.indexOf('r:')===0)d.tg[k]=S.tg[k]});
     Object.keys(S.ph).forEach(function(k){if(k.indexOf('r:')===0)d.ph[k]=S.ph[k]});
     S.arch.forEach(function(a){d.arch[a.id]=a});
-    d.wk=S.wk;
+    d.wk=S.wk;d.al=S.al;
   }
   return JSON.parse(JSON.stringify(d));
 }
@@ -2083,13 +2083,13 @@ function applyDoc(d){
     var kept={};Object.keys(S.nt).forEach(function(k){if(k.indexOf('s:')===0)kept[k]=S.nt[k]});
     S.nt=Object.assign(kept,d.nt||{});S.tg=Object.assign({},d.tg||{});S.ph=Object.assign({},d.ph||{});
     if(d.tl&&d.tl.length)S.tagList=d.tl;
-    S.wk=d.wk||{};
+    S.wk=d.wk||{};S.al=d.al||{};
     S.arch=Object.keys(d.arch||{}).map(function(k){return d.arch[k]}).sort(function(a,b){return b.date-a.date});
     if(d.profile)Object.keys(S.profile).forEach(function(k){if(typeof d.profile[k]==='string')S.profile[k]=d.profile[k]});
     if(d.pdf)Object.keys(S.pdf).forEach(function(k){if(k in d.pdf)S.pdf[k]=d.pdf[k]});
     if(stuPath){var pp=stuPath.split('|');S.classes.forEach(function(c){if(c._k===pp[0])c.students.forEach(function(s){if(s._k===pp[1])S.cur=s.id})})}
     try{localStorage.setItem(DK2,JSON.stringify(snapshot()))}catch(e){}
-    lsSet(NK,S.nt);lsSet(TGK,S.tg);lsSet(PHK,S.ph);lsSet(TLK,S.tagList);lsSet(ARK,S.arch);lsSet(WKK,S.wk);lsSet(PK,S.profile);lsSet(PDK,S.pdf);
+    lsSet(NK,S.nt);lsSet(TGK,S.tg);lsSet(PHK,S.ph);lsSet(TLK,S.tagList);lsSet(ARK,S.arch);lsSet(WKK,S.wk);lsSet(ALK,S.al);lsSet(PK,S.profile);lsSet(PDK,S.pdf);
     calc();
   }finally{Sy.applying=false}
   var ae=document.activeElement,editing=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
@@ -2183,7 +2183,7 @@ function syncStart(code,mustExist){
     if(mustExist&&r.empty){throw new Error('notfound')}
     Sy.dirty=!S.sample;saveSy();
     if(r.empty){
-      var d0=toDoc();if(!d0.classes)d0={v:3,classes:{},nt:{},tg:{},ph:{},arch:{},wk:{}};
+      var d0=toDoc();if(!d0.classes)d0={v:3,classes:{},nt:{},tg:{},ph:{},arch:{},wk:{},al:{}};
       return pushDoc(d0,0).then(function(){Sy.state='ok';Sy.at=Date.now();Sy.err='';saveSy();renderSyncBadge();return syncNow()});
     }
     return syncNow();
@@ -2258,7 +2258,12 @@ $('syncBadge').addEventListener('click',function(){showTab('settings');setTimeou
 /* ====================== العام الدراسي + أعمال الطلاب (صور وPDF) ====================== */
 var WKK='gradebook-works-v1';
 S.wk={};try{S.wk=JSON.parse(localStorage.getItem(WKK)||'{}')||{}}catch(e){S.wk={}}
-S.wkCls='cur';S.wkType='auto';S.wkYear=null;S.wkFixed=null;S.wkJobs=[];S.wkBusy=false;
+var WPK='gradebook-wkpref-v1',ALK='gradebook-alias-v1';
+S.wkPref={direct:false,seq:false,type:'auto'};try{var _wp=JSON.parse(localStorage.getItem(WPK)||'null');if(_wp)for(var _k in _wp)S.wkPref[_k]=_wp[_k]}catch(e){}
+S.al={};try{S.al=JSON.parse(localStorage.getItem(ALK)||'{}')||{}}catch(e){S.al={}}
+function saveWkPref(){S.wkPref.type=S.wkType;lsSet(WPK,S.wkPref)}
+function saveAl(){lsSet(ALK,S.al);syncMark()}
+S.wkCls='cur';S.wkType=S.wkPref.type||'auto';S.wkYear=null;S.wkFixed=null;S.wkJobs=[];S.wkBusy=false;
 function saveWk(){lsSet(WKK,S.wk);syncMark()}
 var WK_TYPES=[{k:'q',l:'السؤال القصير',m:'السؤال القصير'},{k:'t1',l:'الاختبار القصير (1)',m:'الاختبار القصير (1)'},{k:'t2',l:'الاختبار القصير (2)',m:'الاختبار القصير (2)'},{k:'o',l:'أخرى',m:''}];
 function wkType(k){for(var i=0;i<WK_TYPES.length;i++)if(WK_TYPES[i].k===k)return WK_TYPES[i];return null}
@@ -2407,7 +2412,9 @@ function wkSaveWork(cv,info){
     return idbPut({id:id,full:full,thumb:th,sent:0});
   }).then(function(){
     var e={s:info.s||null,c:info.c||null,t:info.t||'',y:curYearLabel(),at:Date.now(),src:info.src||'manual'};
+    if(info.rd)e.rd=String(info.rd).slice(0,80);
     if(!e.s||!e.t){e.rv=1;if(info.cand&&info.cand.length)e.cand=info.cand.map(function(p){return {c:p.c,s:p.s}})}
+    else if(info.sg)e.sg=1;
     if(info.sc!=null&&!isNaN(info.sc))e.sc=+info.sc;
     if(info.cf!=null)e.cf=Math.round(info.cf*100)/100;
     S.wk[id]=e;saveWk();return id;
@@ -2423,7 +2430,7 @@ function aiRead(cv,pool){
 function wkJobsRender(){
   var el=$('wkProg');if(!el)return;
   var j=S.wkJobs.slice(-30);
-  el.innerHTML=j.length?'<div class="wkjobs">'+j.map(function(x){return '<div class="wkj '+x.st+'">'+(x.st==='run'?'⏳ ':x.st==='ok'?'✓ ':x.st==='rv'?'⚠ ':'✗ ')+esc(x.msg)+'</div>'}).join('')+'</div>':'';
+  el.innerHTML=j.length?'<div class="wkjobs">'+j.map(function(x){return '<div class="wkj '+x.st+'"'+(x.id?' data-wk="open" data-id="'+x.id+'" style="cursor:pointer"':'')+'>'+(x.st==='run'?'⏳ ':x.st==='ok'?'✓ ':x.st==='sg'?'؟ ':x.st==='rv'?'⚠ ':'✗ ')+esc(x.msg)+'</div>'}).join('')+'</div>':'';
 }
 function wkPageCanvases(file){
   var isPdf=/pdf/i.test(file.type)||/\.pdf$/i.test(file.name);
@@ -2444,7 +2451,7 @@ function wkProcessFiles(files,opts){
   opts=opts||{};
   files=[].slice.call(files||[]);if(!files.length)return Promise.resolve();
   S.wkJobs=[];S.wkBusy=true;
-  var typeSel=opts.type||S.wkType,fixed=opts.fixed||null,pool=wkPool(S.wkCls),stat={ok:0,rv:0,fail:0};
+  var typeSel=opts.type||S.wkType,fixed=opts.fixed||null,pool=wkPool(S.wkCls),stat={ok:0,rv:0,sg:0,fail:0};
   var needQr=!fixed;
   function setBtns(){[].forEach.call(document.querySelectorAll('[data-wk=pick],[data-wk=cam]'),function(b){b.disabled=S.wkBusy})}
   setBtns();wkJobsRender();
@@ -2460,8 +2467,9 @@ function wkProcessFiles(files,opts){
           var n=pi++,label=f.name+(pgs.length>1?' (صفحة '+(n+1)+')':''),job={st:'run',msg:label+' …'};
           S.wkJobs.push(job);wkJobsRender();
           return pgs[n]().then(function(cv){
-            return wkIdentify(cv,{fixed:fixed,type:typeSel,pool:pool}).then(function(info){return wkSaveWork(cv,info).then(function(){
-              if(info.s&&info.t){stat.ok++;job.st='ok';job.msg=info.s+' — '+wkTypeLabel(info.t)+(info.src==='qr'?' (QR)':info.src==='ai'?' (قراءة ذكية)':'')}
+            return wkIdentify(cv,{fixed:fixed,type:typeSel,pool:pool}).then(function(info){return wkSaveWork(cv,info).then(function(wid){job.id=wid;
+              if(info.s&&info.t&&info.sg){stat.sg++;job.st='sg';job.msg=info.s+' — '+wkTypeLabel(info.t)+': اقتراح بانتظار اعتمادك'}
+              else if(info.s&&info.t){stat.ok++;job.st='ok';job.msg=info.s+' — '+wkTypeLabel(info.t)+(info.src==='qr'?' (QR)':info.src==='ai'?' (قراءة ذكية)':'')}
               else{stat.rv++;job.st='rv';job.msg=label+': بحاجة إلى مراجعة'+(info.s?' (النوع غير محدد)':'')}
             })});
           }).catch(function(e){stat.fail++;job.st='bad';job.msg=label+': تعذّرت المعالجة'}).then(function(){wkJobsRender();return nextPage()});
@@ -2472,7 +2480,7 @@ function wkProcessFiles(files,opts){
     return nextFile();
   }).then(function(){
     S.wkBusy=false;setBtns();
-    toast('تمت معالجة '+(stat.ok+stat.rv)+' ورقة: '+stat.ok+' فُرزت تلقائيًا'+(stat.rv?'، و'+stat.rv+' تحتاج مراجعة':''),false);
+    toast('تمت معالجة '+(stat.ok+stat.rv+stat.sg)+' ورقة: '+stat.ok+' حُفظت'+(stat.sg?'، '+stat.sg+' بانتظار اعتمادك':'')+(stat.rv?'، '+stat.rv+' تحتاج مراجعة':''),false);
     wkSync();if(S.tab==='works')renderWorks();
     var pl=$('panel');if(pl&&!$('ov').hidden&&S.cur>-1){var st0=byId(S.cur);if(st0)openStudent(S.cur)}
   });
@@ -2486,21 +2494,41 @@ function wkIdentify(cv,o){
     wkPool('all').forEach(function(p){if(p.sid===pr[1])hit=p});
     if(hit){info.s=hit.s;info.c=hit.c;info.src='qr';if(!info.t&&wkType(pr[2]))info.t=pr[2];return Promise.resolve(info)}
   }
+  var all=wkPool('all');
   return aiRead(cv,o.pool).then(function(r){
-    if(!r||r.error||!r.ok){if(r&&r.error==='no_key'&&!S.wkNoKeyNote){S.wkNoKeyNote=1;toast('القراءة الذكية غير مفعّلة بعد على الخادم، ستُرسل الأوراق غير المعروفة للمراجعة',false)}return info}
-    var m=matchName(r.match||r.name||'',o.pool);
-    if(!m.best&&r.name)m=matchName(r.name,o.pool);
-    if(matchOk(m)){info.s=m.best.s;info.c=m.best.c;info.src='ai'}else info.cand=m.top;
-    if(!info.t){var tk=typeFromText(r.type);if(tk)info.t=tk}
-    if(r.score!=null&&!isNaN(+r.score))info.sc=+r.score;
-    info.cf=+r.confidence||0;
+    var ok=r&&r.ok&&!r.error;
+    if(!ok&&r&&r.error==='no_key'&&!S.wkNoKeyNote){S.wkNoKeyNote=1;toast('القراءة الذكية للأسماء غير مفعّلة بعد على الخادم',false)}
+    if(ok){
+      var rd=r.name||r.match||'';if(rd)info.rd=rd;
+      var al=rd&&S.al[norm(rd)],hit=null;
+      if(al)all.forEach(function(p){if(p.s===al.s&&p.c===al.c)hit=p});
+      if(hit){info.s=hit.s;info.c=hit.c;info.src='ai';info.cf=1;info.sg=S.wkPref.direct?0:1}
+      else{
+        var m=matchName(r.match||r.name||'',o.pool);if(!m.best&&r.name)m=matchName(r.name,o.pool);
+        info.cf=+r.confidence||0;
+        if(matchOk(m)){info.s=m.best.s;info.c=m.best.c;info.src='ai';info.sg=(S.wkPref.direct&&info.cf>=0.85)?0:1}
+        else info.cand=m.top;
+      }
+      if(!info.t){var tk=typeFromText(r.type);if(tk)info.t=tk}
+      if(r.score!=null&&!isNaN(+r.score))info.sc=+r.score;
+    }
+    if(!info.s&&S.wkPref.seq&&info.t&&info.t!=='o'){var nx=seqNext(o.pool,info.t);if(nx){info.s=nx.s;info.c=nx.c;info.src='seq';info.sg=1}}
     return info;
   });
+}
+function seqNext(pool,t){
+  var cc=curClass(),cn=(S.wkCls==='all'||!pool.length)?(cc?cc.name:(pool[0]&&pool[0].c)):pool[0].c;
+  if(S.wkCls!=='all'&&S.wkCls!=='cur'){var k=S.classes.filter(function(c){return String(c.id)===String(S.wkCls)})[0];if(k)cn=k.name}
+  var used={},cy=curYearLabel();
+  Object.keys(S.wk).forEach(function(id){var e=S.wk[id];if(e.s&&e.t===t&&(e.y||'')===cy&&!e.rv)used[norm(e.c||'')+'|'+norm(e.s)]=1});
+  var list=wkPool('all').filter(function(p){return p.c===cn});
+  for(var i=0;i<list.length;i++)if(!used[norm(list[i].c)+'|'+norm(list[i].s)])return list[i];
+  return null;
 }
 /* ---- أعمال طالب ---- */
 function wkOf(s,year){
   var y=year==null?curYearLabel():year,n=norm(s.name),out=[];
-  Object.keys(S.wk).forEach(function(id){var e=S.wk[id];if(!e.rv&&e.s&&norm(e.s)===n&&(e.y||'')===y)out.push({id:id,e:e})});
+  Object.keys(S.wk).forEach(function(id){var e=S.wk[id];if(!e.rv&&!e.sg&&e.s&&norm(e.s)===n&&(e.y||'')===y)out.push({id:id,e:e})});
   return out.sort(function(a,b){return a.e.at-b.e.at});
 }
 function wkTool(typeKey){
@@ -2645,14 +2673,26 @@ function renderWorks(){
   var ysel=S.wkYear==null?cy:S.wkYear;
   var h='<section class="card"><h2>أعمال الطلاب</h2><p class="sub">صوّر أوراق الطلاب أو ارفعها (صور أو PDF، عدة ملفات دفعة واحدة)، فتُفرز تلقائيًا باسم الطالب ونوع الورقة. ما لم يُعرف يُعرض في «المراجعة» أسفله.</p>'+wkCloudNote();
   h+='<div class="set-grid" style="margin-top:10px"><label>الصف<select id="wkCls">'+(S.classes.length>1?'<option value="all"'+(S.wkCls==='all'?' selected':'')+'>كل الصفوف</option>':'')+S.classes.map(function(c){return '<option value="'+c.id+'"'+((S.wkCls==='cur'?(curClass()&&curClass().id===c.id):String(S.wkCls)===String(c.id))?' selected':'')+'>'+esc(c.name)+'</option>'}).join('')+'</select></label>'+
-    '<label>نوع الورقة<select id="wkTypeSel"><option value="auto"'+(S.wkType==='auto'?' selected':'')+'>تلقائي (من QR أو الورقة)</option>'+WK_TYPES.map(function(t){return '<option value="'+t.k+'"'+(S.wkType===t.k?' selected':'')+'>'+esc(t.l)+'</option>'}).join('')+'</select></label>'+
+    '<label>نوع الأوراق التي أصوّرها الآن<select id="wkTypeSel"><option value="auto"'+(S.wkType==='auto'?' selected':'')+'>تلقائي (من QR أو من الورقة)</option>'+WK_TYPES.map(function(t){return '<option value="'+t.k+'"'+(S.wkType===t.k?' selected':'')+'>'+esc(t.l)+'</option>'}).join('')+'</select></label>'+
     '<label>العام الدراسي المعروض<select id="wkYearSel">'+Object.keys(yrs).sort().map(function(y){return '<option value="'+esc(y)+'"'+(y===ysel?' selected':'')+'>'+esc(yearLabelFor(y))+'</option>'}).join('')+'</select></label></div>';
+  h+='<div style="margin-top:8px"><label class="opt"><input type="checkbox" id="wkSeq"'+(S.wkPref.seq?' checked':'')+'> وضع التسلسل: عند عدم التعرف يُقترح الطالب التالي حسب ترتيب الكشف (يلزم تحديد نوع الأوراق)</label><label class="opt"><input type="checkbox" id="wkDirect"'+(S.wkPref.direct?' checked':'')+'> حفظ مباشر عند ثقة القراءة الذكية العالية (بدون اعتماد)</label></div>';
   h+='<div class="row-actions" style="margin-top:12px"><button class="btn" type="button" data-wk="cam"'+(S.wkBusy?' disabled':'')+'>📷 تصوير ورقة</button><button class="btn" type="button" data-wk="pick"'+(S.wkBusy?' disabled':'')+'>رفع صور / PDF</button><button class="btn ghost" type="button" data-wk="qr">طباعة ترويسات QR</button></div>';
   h+='<input type="file" id="wkFileIn" accept="image/*,application/pdf" multiple hidden><input type="file" id="wkCamIn" accept="image/*" capture="environment" hidden><div id="wkProg"></div></section>';
+  /* اقتراحات للاعتماد */
+  var sgs=Object.keys(S.wk).filter(function(k){return S.wk[k].sg&&!S.wk[k].rv}).sort(function(a,b){return S.wk[a].at-S.wk[b].at});
+  var poolAll=wkPool('all');S.wkOpts=poolAll;
+  if(sgs.length){
+    h+='<section class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">اقتراحات للاعتماد ('+sgs.length+')</h2><button class="btn" type="button" data-wk="sgall">اعتماد الكل</button></div><p class="sub">تعرّف التطبيق على أصحاب هذه الأوراق. اضغط «اعتماد» لتُحفظ في ملف الطالب، أو «تغيير» إن كان الاقتراح خاطئًا.</p><div class="wkrvlist">';
+    sgs.forEach(function(id){
+      var e=S.wk[id],si=-1;poolAll.forEach(function(p,i){if(p.s===e.s&&p.c===e.c)si=i});
+      h+='<div class="wkrv" data-id="'+id+'"><button type="button" class="wkth ld" data-wk="open" data-id="'+id+'"><img data-wki="'+id+'" alt=""></button><div class="wkrvc"><div><b>'+esc(e.s)+'</b><div class="sub">'+esc(e.c||'')+' · '+esc(wkTypeLabel(e.t))+(e.src==='seq'?' · حسب التسلسل':e.src==='ai'?' · قراءة ذكية':'')+'</div></div><div class="row-actions"><button class="btn sm" type="button" data-wk="sgok" data-id="'+id+'">اعتماد</button><button class="btn sm ghost" type="button" data-wk="rvdel" data-id="'+id+'">حذف</button></div><details><summary>تغيير الطالب أو النوع</summary><select class="wkrvs">'+poolAll.map(function(p,i){return '<option value="'+i+'"'+(i===si?' selected':'')+'>'+esc(p.c)+' — '+esc(p.s)+'</option>'}).join('')+'</select><select class="wkrvt">'+WK_TYPES.map(function(t){return '<option value="'+t.k+'"'+(e.t===t.k?' selected':'')+'>'+esc(t.l)+'</option>'}).join('')+'</select><button class="btn sm" type="button" data-wk="rvok" data-id="'+id+'">حفظ التغيير</button></details></div></div>';
+    });
+    h+='</div></section>';
+  }
   /* مراجعة */
   var rv=Object.keys(S.wk).filter(function(k){return S.wk[k].rv});
   if(rv.length){
-    var pool=wkPool('all');S.wkOpts=pool;
+    var pool=poolAll;
     h+='<section class="card" style="margin-top:12px"><h2>بحاجة إلى مراجعة ('+rv.length+')</h2><p class="sub">لم يستطع التطبيق تحديد صاحب الورقة أو نوعها. اختر الطالب والنوع ثم اعتمد.</p><div class="wkrvlist">';
     rv.sort(function(a,b){return S.wk[a].at-S.wk[b].at}).forEach(function(id){
       var e=S.wk[id],cand=e.cand||[];
@@ -2695,7 +2735,7 @@ function classAvgsCur(){
   return S.classes.map(function(c){var v=c.students.filter(function(s){return !s.none}).map(function(s){return s.pct});return {n:c.name,avg:v.length?v.reduce(function(x,y){return x+y},0)/v.length:null,cnt:c.students.length}});
 }
 function renderYears(){
-  var el=$('v-years'),cy=curYearLabel(),nW=Object.keys(S.wk).filter(function(k){return !S.wk[k].rv&&(S.wk[k].y||'')===cy}).length;
+  var el=$('v-years'),cy=curYearLabel(),nW=Object.keys(S.wk).filter(function(k){return !S.wk[k].rv&&!S.wk[k].sg&&(S.wk[k].y||'')===cy}).length;
   var stN=allStu().length;
   var h='<section class="card"><h2>العام الدراسي الحالي</h2><div class="set-grid"><label>العام الدراسي<input type="text" id="yrCur" value="'+esc(S.profile.year||'')+'" placeholder="مثال: 2026/2027"></label><label>الفصل الدراسي<input type="text" id="yrSem" value="'+esc(S.profile.sem||'')+'" placeholder="الفصل الأول"></label></div>';
   h+='<p class="sub">'+S.classes.length+' صف · '+stN+' طالبًا · '+nW+' ورقة مرفوعة هذا العام</p>';
@@ -2756,6 +2796,7 @@ function doNewYear(yr,sem,cfg,keepPh){
   toast('بدأ العام الدراسي '+yr+'، والسابق محفوظ في الأرشيف',true);
 }
 /* ---- أحداث ---- */
+function learnAlias(w){if(w.rd&&w.s){S.al[norm(w.rd)]={c:w.c,s:w.s};saveAl()}}
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-wk],[data-yr]');if(!t)return;
   var a=t.getAttribute('data-wk'),y=t.getAttribute('data-yr'),id=t.getAttribute('data-id');
@@ -2770,8 +2811,10 @@ document.addEventListener('click',function(e){
     var w=S.wk[id],pl=S.wkOpts||[];
     if(si<0||!pl[si]){toast('اختر الطالب أولًا',false);return}
     if(!tp){toast('اختر نوع الورقة',false);return}
-    w.s=pl[si].s;w.c=pl[si].c;w.t=tp;w.src='manual';delete w.rv;delete w.cand;saveWk();renderWorks();toast('تم الاعتماد',false);return;
+    w.s=pl[si].s;w.c=pl[si].c;w.t=tp;w.src='manual';delete w.rv;delete w.cand;delete w.sg;learnAlias(w);saveWk();renderWorks();toast('تم الاعتماد',false);return;
   }
+  if(a==='sgok'){var w1=S.wk[id];if(w1){delete w1.sg;learnAlias(w1);saveWk();renderWorks();toast('اعتُمدت وحُفظت في ملف '+w1.s,false)}return}
+  if(a==='sgall'){var n1=0;Object.keys(S.wk).forEach(function(k){var w2=S.wk[k];if(w2.sg&&!w2.rv){delete w2.sg;learnAlias(w2);n1++}});saveWk();renderWorks();toast('اعتُمدت '+n1+' ورقة',false);return}
   if(a==='rvdel'){
     if(!t.getAttribute('data-sure')){t.setAttribute('data-sure','1');t.textContent='تأكيد الحذف';return}
     wkDelete(id);renderWorks();return;
@@ -2791,7 +2834,9 @@ document.addEventListener('change',function(e){
     wkProcessFiles(arr,fx?{fixed:fx,type:ty||'o'}:{});return;
   }
   if(t.id==='wkCls'){S.wkCls=t.value==='all'?'all':+t.value;renderWorks();return}
-  if(t.id==='wkTypeSel'){S.wkType=t.value;return}
+  if(t.id==='wkTypeSel'){S.wkType=t.value;saveWkPref();return}
+  if(t.id==='wkSeq'){S.wkPref.seq=t.checked;saveWkPref();return}
+  if(t.id==='wkDirect'){S.wkPref.direct=t.checked;saveWkPref();return}
   if(t.id==='wkYearSel'){S.wkYear=t.value;renderWorks();return}
   if(t.getAttribute&&t.getAttribute('data-wktype')){var w=S.wk[t.getAttribute('data-wktype')];if(w){w.t=t.value;if(w.s&&w.t)delete w.rv;saveWk()}return}
   if(t.id==='yrCur'){S.profile.year=t.value.trim();saveProfile();return}
